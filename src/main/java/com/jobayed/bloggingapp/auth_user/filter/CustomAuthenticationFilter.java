@@ -1,11 +1,8 @@
-package com.jobayed.bloggingapp.filter;
+package com.jobayed.bloggingapp.auth_user.filter;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jobayed.bloggingapp.utils.JwtUtils;
+import com.jobayed.bloggingapp.auth_user.utils.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,8 +16,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,14 +49,16 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication)
             throws IOException, ServletException {
         User user = (User)authentication.getPrincipal();
-        List<?> claims = user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
+        List<?> claims = user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
         String issuer = request.getRequestURL().toString();
 
         String access_token = null;
         String refresh_token = null;
         try {
-            access_token = jwtUtils.getAccessToken(user,claims,issuer);
-            refresh_token = jwtUtils.getRefreshToken(user,issuer);
+            access_token = jwtUtils.getAccessToken(user.getUsername(),claims,issuer);
+            refresh_token = jwtUtils.getRefreshToken(user.getUsername(),issuer);
         } catch (Exception e) {
             e.printStackTrace();
         }

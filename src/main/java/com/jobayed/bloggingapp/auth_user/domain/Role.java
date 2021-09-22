@@ -1,4 +1,4 @@
-package com.jobayed.bloggingapp.domain;
+package com.jobayed.bloggingapp.auth_user.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

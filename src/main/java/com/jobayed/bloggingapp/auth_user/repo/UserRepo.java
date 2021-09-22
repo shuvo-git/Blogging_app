@@ -1,6 +1,6 @@
-package com.jobayed.bloggingapp.repo;
+package com.jobayed.bloggingapp.auth_user.repo;
 
-import com.jobayed.bloggingapp.domain.User;
+import com.jobayed.bloggingapp.auth_user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepo extends JpaRepository<User,Long> {

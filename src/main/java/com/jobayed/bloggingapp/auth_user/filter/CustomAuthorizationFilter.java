@@ -1,17 +1,13 @@
-package com.jobayed.bloggingapp.filter;
+package com.jobayed.bloggingapp.auth_user.filter;
 
-import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jobayed.bloggingapp.service.UserServiceImpl;
-import com.jobayed.bloggingapp.utils.JwtUtils;
+import com.jobayed.bloggingapp.auth_user.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -22,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 
+import static java.util.stream.StreamSupport.stream;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -33,7 +30,8 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        if(request.getServletPath().equals("/login")){
+        if(request.getServletPath().equals("/login") || request.getServletPath().equals("/token/refresh") )
+        {
             filterChain.doFilter(request,response);
         }
         else {
@@ -50,8 +48,20 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
 
                     DecodedJWT decodedJWT = jwtUtils.getTokenDecoder(token);
                     username = decodedJWT.getSubject();
-                    String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
-                    Arrays.stream(roles).forEach(role->authorities.add(new SimpleGrantedAuthority(role)));
+                    Collection<String> roles = decodedJWT.getClaim("Roles").asList(String.class);
+                    roles.stream().forEach(role-> {
+                        authorities.add(new SimpleGrantedAuthority(role));
+                    });
+                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        username, null, authorities
+                                );
+                        usernamePasswordAuthenticationToken
+                                .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+                    }
 
                 } catch (IllegalArgumentException e) {
                     log.debug("Unable to get JWT Token");
@@ -70,25 +80,8 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
                 log.debug("JWT Token does not begin with Bearer String");
             }
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                try {
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    username, null, authorities
-                            );
-                    usernamePasswordAuthenticationToken
-                            .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                } catch (Exception e) {
-                    log.debug(e.getMessage());
-                }
-                filterChain.doFilter(request, response);
-            }
-            else {
-                filterChain.doFilter(request, response);
-            }
-
+            filterChain.doFilter(request, response);
         }
     }
 }
