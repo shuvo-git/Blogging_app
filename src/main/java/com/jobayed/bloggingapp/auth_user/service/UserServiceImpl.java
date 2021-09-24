@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService, UserDetailsService
     private String getCurrentDateTime()
     {
         Date date = new Date();
-        String strDateFormat = "d M, Y hh:mm:ss a";
+        String strDateFormat = "d MM, Y hh:mm:ss a";
         DateFormat dateFormat = new SimpleDateFormat(strDateFormat);
         String formattedDate= dateFormat.format(date);
         return formattedDate;
